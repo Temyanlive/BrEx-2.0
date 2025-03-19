@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Data Comparison Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        .container {
+            width: 60%;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0px 0px 10px gray;
+            border-radius: 10px;
+        }
+        .title-box {
+            background: gray;
+            color: white;
+            padding: 10px;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .selection-box {
+            background: lightgray;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .comparison-box {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            background: #1C1C1C;
+            color: white;
+            padding: 20px;
+            font-size: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .result-box {
+            padding: 20px;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .correct {
+            background: lightgreen;
+        }
+        .incorrect {
+            background: red;
+            color: white;
+        }
+        .highlight {
+            background: yellow;
+            color: black;
+            font-weight: bold;
+        }
+        button {
+            margin: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
+    <script>
+        let discrepancyIndexes = new Set();
+        
+        function generateRandomString(type, length) {
+            const digits = '0123456789';
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            let result = '';
+            
+            if (type === 'numeric' || type === 'money') {
+                for (let i = 0; i < length; i++) {
+                    result += digits.charAt(Math.floor(Math.random() * digits.length));
+                }
+                if (type === 'money') {
+                    result += '.' + digits.charAt(Math.floor(Math.random() * 10)) + digits.charAt(Math.floor(Math.random() * 10));
+                }
+            } else if (type === 'letter') {
+                for (let i = 0; i < length; i++) {
+                    result += letters.charAt(Math.floor(Math.random() * letters.length));
+                }
+            } else if (type === 'alphanumeric') {
+                for (let i = 0; i < length; i++) {
+                    result += (letters + digits).charAt(Math.floor(Math.random() * (letters.length + digits.length)));
+                }
+            } else if (type === 'id_format') {
+                let numCount = Math.floor(Math.random() * 3) + 3;
+                let letterCount = length - 2 - numCount;
+                let numbers = Array.from({length: numCount}, () => digits.charAt(Math.floor(Math.random() * digits.length))).join('');
+                let lettersOnly = Array.from({length: letterCount}, () => letters.charAt(Math.floor(Math.random() * letters.length))).join('');
+                let combined = (lettersOnly + numbers).split('').sort(() => Math.random() - 0.5).join('');
+                result = 'ID' + combined;
+            }
+            return result;
+        }
+        
+        function modifyString(original, type) {
+            let modified = original.split('');
+            discrepancyIndexes.clear();
+            let discrepancyCount = Math.floor(Math.random() * 3) + 1;
+            
+            while (discrepancyIndexes.size < discrepancyCount) {
+                let index = Math.floor(Math.random() * modified.length);
+                if (type === 'money' && (modified[index] < '0' || modified[index] > '9')) continue; // Ensure only numbers change in money mode
+                discrepancyIndexes.add(index);
+            }
+            
+            discrepancyIndexes.forEach(index => {
+                modified[index] = String.fromCharCode(48 + Math.floor(Math.random() * 10)); // Replace only with numbers in money mode
+            });
+            
+            return { modified: modified.join(''), discrepancyCount };
+        }
+        
+        function startGame() {
+            let dataType = document.getElementById('data_type').value;
+            let dataLength = parseInt(document.getElementById('data_length').value);
+            let original = generateRandomString(dataType, dataLength);
+            let { modified, discrepancyCount } = modifyString(original, dataType);
+            
+            document.getElementById('original').innerText = original;
+            document.getElementById('modified').innerText = modified;
+            document.getElementById('discrepancyCount').value = '';
+            document.getElementById('discrepancyCount').dataset.correct = discrepancyCount;
+            document.getElementById('result').innerText = '';
+            document.getElementById('result').className = 'result-box';
+        }
+        
+        function checkAnswer() {
+            let userAnswer = parseInt(document.getElementById('discrepancyCount').value);
+            let correctAnswer = parseInt(document.getElementById('discrepancyCount').dataset.correct);
+            let resultBox = document.getElementById('result');
+            let modifiedText = document.getElementById('modified').innerText.split('');
+            
+            if (userAnswer === correctAnswer) {
+                resultBox.innerText = 'Correct';
+                resultBox.className = 'result-box correct';
+            } else {
+                resultBox.innerText = `Incorrect. Actual discrepancies: ${correctAnswer}`;
+                resultBox.className = 'result-box incorrect';
+                
+                discrepancyIndexes.forEach(index => {
+                    modifiedText[index] = `<span class='highlight'>${modifiedText[index]}</span>`;
+                });
+                
+                document.getElementById('modified').innerHTML = modifiedText.join('');
+            }
+            
+            setTimeout(startGame, 2000);
+        }
+    </script>
+</head>
+<body>
+    <div class='container'>
+        <div class='title-box'>Data Comparison Game</div>
+        <div class='selection-box'>
+            <label>Select Data Type:</label>
+            <select id='data_type'>
+                <option value='numeric'>Numeric</option>
+                <option value='letter'>Letters</option>
+                <option value='alphanumeric'>Alphanumeric</option>
+                <option value='money'>Amount of Money</option>
+                <option value='id_format'>User ID Format</option>
+            </select>
+            <label>Choose Length:</label>
+            <input type='number' id='data_length' value='8' min='3' max='20'>
+            <button onclick='startGame()'>Start Game</button>
+        </div>
+        <div class='comparison-box'>
+            <div><strong>Original:</strong> <span id='original'></span></div>
+            <div><strong>Modified:</strong> <span id='modified'></span></div>
+        </div>
+        <p>How many discrepancies do you see? (Enter a number)</p>
+        <input type='number' id='discrepancyCount' min='1' max='3'>
+        <button onclick='checkAnswer()'>Submit</button>
+        <div class='result-box' id='result'></div>
+    </div>
+</body>
+</html>
