@@ -9,9 +9,12 @@
             font-family: Arial, sans-serif;
             text-align: center;
             background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
         }
         .container {
-            width: 60%;
+            width: 90%;
+            max-width: 600px;
             margin: auto;
             background: white;
             padding: 20px;
@@ -33,17 +36,18 @@
         }
         .comparison-box {
             display: flex;
-            justify-content: center;
-            gap: 50px;
+            flex-direction: column;
+            align-items: center;
             background: #1C1C1C;
             color: white;
             padding: 20px;
-            font-size: 20px;
+            font-size: 18px;
             border-radius: 5px;
             margin-bottom: 20px;
+            word-wrap: break-word;
         }
         .result-box {
-            padding: 20px;
+            padding: 10px;
             border-radius: 5px;
             font-size: 18px;
             font-weight: bold;
@@ -61,8 +65,23 @@
             font-weight: bold;
         }
         button {
-            margin: 20px;
+            margin: 10px;
             padding: 10px 20px;
+            font-size: 16px;
+            width: 100%;
+            max-width: 200px;
+        }
+        input {
+            width: 100%;
+            max-width: 200px;
+            padding: 8px;
+            font-size: 16px;
+            text-align: center;
+        }
+        select {
+            width: 100%;
+            max-width: 250px;
+            padding: 8px;
             font-size: 16px;
         }
     </style>
@@ -107,12 +126,12 @@
             
             while (discrepancyIndexes.size < discrepancyCount) {
                 let index = Math.floor(Math.random() * modified.length);
-                if (type === 'money' && (modified[index] < '0' || modified[index] > '9')) continue; // Ensure only numbers change in money mode
+                if (type === 'money' && (modified[index] < '0' || modified[index] > '9')) continue;
                 discrepancyIndexes.add(index);
             }
             
             discrepancyIndexes.forEach(index => {
-                modified[index] = String.fromCharCode(48 + Math.floor(Math.random() * 10)); // Replace only with numbers in money mode
+                modified[index] = String.fromCharCode(48 + Math.floor(Math.random() * 10));
             });
             
             return { modified: modified.join(''), discrepancyCount };
@@ -130,29 +149,6 @@
             document.getElementById('discrepancyCount').dataset.correct = discrepancyCount;
             document.getElementById('result').innerText = '';
             document.getElementById('result').className = 'result-box';
-        }
-        
-        function checkAnswer() {
-            let userAnswer = parseInt(document.getElementById('discrepancyCount').value);
-            let correctAnswer = parseInt(document.getElementById('discrepancyCount').dataset.correct);
-            let resultBox = document.getElementById('result');
-            let modifiedText = document.getElementById('modified').innerText.split('');
-            
-            if (userAnswer === correctAnswer) {
-                resultBox.innerText = 'Correct';
-                resultBox.className = 'result-box correct';
-            } else {
-                resultBox.innerText = `Incorrect. Actual discrepancies: ${correctAnswer}`;
-                resultBox.className = 'result-box incorrect';
-                
-                discrepancyIndexes.forEach(index => {
-                    modifiedText[index] = `<span class='highlight'>${modifiedText[index]}</span>`;
-                });
-                
-                document.getElementById('modified').innerHTML = modifiedText.join('');
-            }
-            
-            setTimeout(startGame, 2000);
         }
     </script>
 </head>
