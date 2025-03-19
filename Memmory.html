@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Comparison Game</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; color: grey; }
+        #game-container { max-width: 600px; margin: auto; }
+        #header { background: #666; color: white; padding: 10px; font-size: 20px; }
+        #controls { background: #ccc; padding: 15px; }
+        #data-field, #timer, #user-input, #submit, #thinking-timer { font-size: 24px; font-weight: bold; margin: 20px; }
+        #result { margin-top: 20px; font-size: 20px; padding: 10px; }
+        .hidden { display: none; }
+        .black-box { background: black; color: white; padding: 15px; margin: 20px 0; }
+        .timer { font-size: 18px; color: red; }
+        .correct { background-color: lightgreen; padding: 10px; }
+        .incorrect { background-color: lightcoral; padding: 10px; }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="header">Data Comparison Game</div>
+        <div id="controls">
+            <label for="data-length">Data Length:</label>
+            <input type="number" id="data-length" value="8" min="1" max="15"> 
+            <button id="start-game">Start Game</button>
+            <button id="stop-game">Stop</button>
+        </div>
+        
+        <div class="timer" id="timer">Time remaining: 10s</div>
+        <div id="data-field" class="hidden"></div>
+        <div class="black-box hidden"></div>
+        
+        <div class="timer hidden" id="thinking-timer">Thinking time remaining: 30s</div>
+        <input type="text" id="user-input" class="hidden" placeholder="Enter the number here...">
+        <button id="submit" class="hidden">Submit</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let originalData = "";
+        let displayTimer, thinkingTimer;
+        let gameActive = false;
+        let currencies = ["RUB", "USD", "KGS", "BTC", "USDT", "USDC", "ETH"];
+
+        function generateData() {
+            let currency = currencies[Math.floor(Math.random() * currencies.length)];
+            let length = parseInt(document.getElementById("data-length").value);
+            let amount = (Math.pow(10, length - 1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length - 1))).toFixed(4);
+            return `${amount} ${currency}`;
+        }
+
+        function startTimers() {
+            gameActive = true;
+            let timeLeft = 10;
+            document.getElementById("timer").innerText = `Time remaining: ${timeLeft}s`;
+            document.getElementById("timer").classList.remove("hidden");
+            
+            displayTimer = setInterval(() => {
+                if (!gameActive || timeLeft <= 0) {
+                    clearInterval(displayTimer);
+                    document.getElementById("data-field").classList.add("hidden");
+                    document.getElementById("timer").classList.add("hidden");
+                    if (gameActive) startThinkingTimer();
+                } else {
+                    document.getElementById("timer").innerText = `Time remaining: ${timeLeft--}s`;
+                }
+            }, 1000);
+        }
+
+        function startThinkingTimer() {
+            let thinkTime = 30;
+            document.getElementById("thinking-timer").innerText = `Thinking time remaining: ${thinkTime}s`;
+            document.getElementById("thinking-timer").classList.remove("hidden");
+            document.getElementById("user-input").classList.remove("hidden");
+            document.getElementById("submit").classList.remove("hidden");
+            
+            thinkingTimer = setInterval(() => {
+                if (!gameActive || thinkTime <= 0) {
+                    clearInterval(thinkingTimer);
+                    document.getElementById("thinking-timer").classList.add("hidden");
+                    document.getElementById("user-input").classList.add("hidden");
+                    document.getElementById("submit").classList.add("hidden");
+                    if (gameActive) {
+                        document.getElementById("result").innerText = "Time is over! Game restarting...";
+                        setTimeout(() => location.reload(), 2000);
+                    }
+                } else {
+                    document.getElementById("thinking-timer").innerText = `Thinking time remaining: ${thinkTime--}s`;
+                }
+            }, 1000);
+        }
+
+        document.getElementById("start-game").addEventListener("click", function() {
+            gameActive = true;
+            originalData = generateData();
+            document.getElementById("data-field").innerText = originalData;
+            document.getElementById("data-field").classList.remove("hidden");
+            document.getElementById("thinking-timer").classList.add("hidden");
+            document.getElementById("user-input").classList.add("hidden");
+            document.getElementById("submit").classList.add("hidden");
+            document.getElementById("result").innerText = "";
+            startTimers();
+        });
+
+        document.getElementById("submit").addEventListener("click", function() {
+            if (!gameActive) return;
+            clearInterval(thinkingTimer);
+            let userInput = document.getElementById("user-input").value.trim();
+            let correctValue = originalData.split(" ")[0];
+            let resultElement = document.getElementById("result");
+            
+            if (userInput === correctValue) {
+                resultElement.innerText = "Correct!";
+                resultElement.className = "correct";
+            } else {
+                resultElement.innerText = `Incorrect! The correct value was ${correctValue}`;
+                resultElement.className = "incorrect";
+            }
+            document.getElementById("user-input").classList.add("hidden");
+            document.getElementById("submit").classList.add("hidden");
+            gameActive = false;
+        });
+
+        document.getElementById("stop-game").addEventListener("click", function() {
+            gameActive = false;
+            clearInterval(displayTimer);
+            clearInterval(thinkingTimer);
+            document.getElementById("timer").innerText = "Time remaining: 0s";
+            document.getElementById("thinking-timer").innerText = "Thinking time remaining: 0s";
+            document.getElementById("result").innerText = "Game stopped.";
+            document.getElementById("data-field").classList.add("hidden");
+            document.getElementById("user-input").classList.add("hidden");
+            document.getElementById("submit").classList.add("hidden");
+        });
+    </script>
+</body>
+</html>
