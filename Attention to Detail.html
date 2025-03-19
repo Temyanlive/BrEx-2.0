@@ -94,7 +94,7 @@
                 let numCount = Math.floor(Math.random() * 3) + 3;
                 let letterCount = length - 2 - numCount;
                 let numbers = Array.from({length: numCount}, () => digits.charAt(Math.floor(Math.random() * digits.length))).join('');
-                let lettersOnly = Array.from({length: letterCount}, () => letters.charAt(Math.floor(Math.random() * letters.length))).join('');
+                let lettersOnly = Array.from({length: letterCount}, () => uppercaseLetters.charAt(Math.floor(Math.random() * uppercaseLetters.length))).join('');
                 let combined = (lettersOnly + numbers).split('').sort(() => Math.random() - 0.5).join('');
                 result = 'ID' + combined;
             }
