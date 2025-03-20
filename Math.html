@@ -8,9 +8,8 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            background-color: #a3a2b0;
+            background-color: #D3D3D3;
             padding: 20px;
-            color: blue;
         }
         .container {
             width: 60%;
@@ -86,7 +85,7 @@
             </tbody>
         </table>
         <br>
-        <button onclick="finishGame()">FINISH</button>
+        <button onclick="checkAllAnswers()">FINISH</button>
     </div>
     <script>
         function generateNumber(digitCount) {
@@ -98,19 +97,33 @@
         function generateExample(operation, digitCount) {
             let num1 = generateNumber(digitCount);
             let num2 = generateNumber(digitCount);
-            let expression;
+            let expression, answer;
             switch(operation) {
-                case 'addition': expression = `${num1} + ${num2}`; break;
-                case 'subtraction': expression = `${num1} - ${num2}`; break;
-                case 'multiplication': expression = `${num1} * ${num2}`; break;
-                case 'division': expression = `${num1} / ${num2}`; break;
+                case 'addition': 
+                    expression = `${num1} + ${num2}`;
+                    answer = num1 + num2;
+                    break;
+                case 'subtraction': 
+                    expression = `${num1} - ${num2}`;
+                    answer = num1 - num2;
+                    break;
+                case 'multiplication': 
+                    expression = `${num1} * ${num2}`;
+                    answer = num1 * num2;
+                    break;
+                case 'division': 
+                    expression = `${num1} / ${num2}`;
+                    answer = (num1 / num2).toFixed(3);
+                    break;
                 case 'random': 
                     let ops = ['+', '-', '*', '/'];
                     let op = ops[Math.floor(Math.random() * 4)];
                     expression = `${num1} ${op} ${num2}`;
+                    answer = eval(expression);
+                    if (op === '/') answer = answer.toFixed(3);
                     break;
             }
-            return { expression, answer: eval(expression).toFixed(2) };
+            return { expression, answer };
         }
 
         function startGame() {
@@ -125,27 +138,32 @@
                 let row = `<tr>
                     <td>${i}</td>
                     <td>${expression} =</td>
-                    <td><input type='text' id='answer${i}' onblur='checkAnswer(${i}, ${answer})'></td>
+                    <td><input type='text' id='answer${i}'></td>
                     <td id='result${i}'></td>
                 </tr>`;
                 tableBody.innerHTML += row;
             }
         }
 
-        function checkAnswer(id, correctAnswer) {
-            let userAnswer = document.getElementById(`answer${id}`).value;
-            let resultCell = document.getElementById(`result${id}`);
-            if (parseFloat(userAnswer) === parseFloat(correctAnswer)) {
-                resultCell.textContent = 'Correct';
-                resultCell.className = 'correct';
-            } else {
-                resultCell.textContent = 'Incorrect';
-                resultCell.className = 'incorrect';
+        function checkAllAnswers() {
+            let tableBody = document.getElementById('exerciseTable');
+            let rows = tableBody.getElementsByTagName('tr');
+            for (let i = 0; i < rows.length; i++) {
+                let userAnswer = document.getElementById(`answer${i + 1}`).value.replace(',', '.');
+                let correctAnswer = rows[i].cells[1].textContent.split('=')[0].trim();
+                let resultCell = document.getElementById(`result${i + 1}`);
+                let expectedAnswer = eval(correctAnswer);
+                if (correctAnswer.includes('/')) {
+                    expectedAnswer = expectedAnswer.toFixed(3);
+                }
+                if (parseFloat(userAnswer) === parseFloat(expectedAnswer)) {
+                    resultCell.textContent = 'Correct';
+                    resultCell.className = 'correct';
+                } else {
+                    resultCell.textContent = 'Incorrect';
+                    resultCell.className = 'incorrect';
+                }
             }
-        }
-
-        function finishGame() {
-            alert('Game Finished! Review your answers.');
         }
     </script>
 </body>
