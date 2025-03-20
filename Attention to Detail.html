@@ -17,6 +17,7 @@
             padding: 20px;
             box-shadow: 0px 0px 10px gray;
             border-radius: 10px;
+            position: relative;
         }
         .title-box {
             background: gray;
@@ -60,21 +61,34 @@
             color: black;
             font-weight: bold;
         }
-        button {
-            margin: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
+        .modified-box {
+            position: absolute;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            background: #1C1C1C;
+            padding: 10px;
+            border-radius: 5px;
+            transition: top 0.5s, left 0.5s;
+        }
+        .game-area {
+            width: 100%;
+            height: 200px;
+            margin-top: 20px;
+            position: relative;
+            background: #e0e0e0;
+            border: 2px solid red;
         }
     </style>
     <script>
         let discrepancyIndexes = new Set();
-        
+
         function generateRandomString(type, length) {
             const digits = '0123456789';
             const uppercaseLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
             let result = '';
-            
+
             if (type === 'numeric' || type === 'money') {
                 for (let i = 0; i < length; i++) {
                     result += digits.charAt(Math.floor(Math.random() * digits.length));
@@ -84,7 +98,7 @@
                 }
             } else if (type === 'letter') {
                 for (let i = 0; i < length; i++) {
-                    result += letters.charAt(Math.floor(Math.random() * letters.length));
+                    result += letters.charAt(Math.floor(Math.random() * letters.length)); // ✅ Now only letters, no numbers
                 }
             } else if (type === 'alphanumeric') {
                 for (let i = 0; i < length; i++) {
@@ -100,59 +114,75 @@
             }
             return result;
         }
-        
+
         function modifyString(original, type) {
             let modified = original.split('');
             discrepancyIndexes.clear();
             let discrepancyCount = Math.floor(Math.random() * 3) + 1;
-            
+
             while (discrepancyIndexes.size < discrepancyCount) {
                 let index = Math.floor(Math.random() * modified.length);
-                if (type === 'money' && (modified[index] < '0' || modified[index] > '9')) continue; // Ensure only numbers change in money mode
+                if (type === 'money' && (modified[index] < '0' || modified[index] > '9')) continue;
                 discrepancyIndexes.add(index);
             }
-            
+
             discrepancyIndexes.forEach(index => {
-                modified[index] = String.fromCharCode(48 + Math.floor(Math.random() * 10)); // Replace only with numbers in money mode
+                modified[index] = String.fromCharCode(48 + Math.floor(Math.random() * 10));
             });
-            
+
             return { modified: modified.join(''), discrepancyCount };
         }
-        
+
+        function moveModifiedBox() {
+            let modifiedBox = document.getElementById('modified-box');
+            let gameArea = document.getElementById('game-area');
+
+            let maxX = gameArea.clientWidth - modifiedBox.clientWidth;
+            let maxY = gameArea.clientHeight - modifiedBox.clientHeight;
+
+            let randomX = Math.floor(Math.random() * maxX);
+            let randomY = Math.floor(Math.random() * maxY);
+
+            modifiedBox.style.left = `${randomX}px`;
+            modifiedBox.style.top = `${randomY}px`;
+        }
+
         function startGame() {
             let dataType = document.getElementById('data_type').value;
             let dataLength = parseInt(document.getElementById('data_length').value);
             let original = generateRandomString(dataType, dataLength);
             let { modified, discrepancyCount } = modifyString(original, dataType);
-            
+
             document.getElementById('original').innerText = original;
-            document.getElementById('modified').innerText = modified;
+            document.getElementById('modified-box').innerText = modified;
             document.getElementById('discrepancyCount').value = '';
             document.getElementById('discrepancyCount').dataset.correct = discrepancyCount;
             document.getElementById('result').innerText = '';
             document.getElementById('result').className = 'result-box';
+
+            moveModifiedBox();
         }
-        
+
         function checkAnswer() {
             let userAnswer = parseInt(document.getElementById('discrepancyCount').value);
             let correctAnswer = parseInt(document.getElementById('discrepancyCount').dataset.correct);
             let resultBox = document.getElementById('result');
-            let modifiedText = document.getElementById('modified').innerText.split('');
-            
+            let modifiedBox = document.getElementById('modified-box');
+
             if (userAnswer === correctAnswer) {
                 resultBox.innerText = 'Correct';
                 resultBox.className = 'result-box correct';
             } else {
                 resultBox.innerText = `Incorrect. Actual discrepancies: ${correctAnswer}`;
                 resultBox.className = 'result-box incorrect';
-                
+
+                let modifiedText = modifiedBox.innerText.split('');
                 discrepancyIndexes.forEach(index => {
                     modifiedText[index] = `<span class='highlight'>${modifiedText[index]}</span>`;
                 });
-                
-                document.getElementById('modified').innerHTML = modifiedText.join('');
+                modifiedBox.innerHTML = modifiedText.join('');
             }
-            
+
             setTimeout(startGame, 2000);
         }
     </script>
@@ -161,7 +191,6 @@
     <div class='container'>
         <div class='title-box'>Data Comparison Game</div>
         <div class='selection-box'>
-            <label>Select Data Type:</label>
             <select id='data_type'>
                 <option value='numeric'>Numeric</option>
                 <option value='letter'>Letters</option>
@@ -169,18 +198,14 @@
                 <option value='money'>Amount of Money</option>
                 <option value='id_format'>User ID Format</option>
             </select>
-            <label>Choose Length:</label>
             <input type='number' id='data_length' value='8' min='3' max='20'>
             <button onclick='startGame()'>Start Game</button>
         </div>
-        <div class='comparison-box'>
-            <div><strong>Original:</strong> <span id='original'></span></div>
-            <div><strong>Modified:</strong> <span id='modified'></span></div>
-        </div>
-        <p>How many discrepancies do you see? (Enter a number)</p>
+        <div class='comparison-box'><strong>Original:</strong> <span id='original'></span></div>
         <input type='number' id='discrepancyCount' min='1' max='3'>
         <button onclick='checkAnswer()'>Submit</button>
-        <div class='result-box' id='result'></div>
+        <div class='game-area' id='game-area'><div id='modified-box' class='modified-box'></div></div>
+        <div id='result' class='result-box'></div>
     </div>
 </body>
 </html>
