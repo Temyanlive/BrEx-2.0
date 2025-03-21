@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Similarities in Financial Data</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .container { width: 80%; margin: auto; display: flex; flex-wrap: wrap; justify-content: center; }
+        .data-item { display: inline-block; margin: 10px; padding: 15px; border: 1px solid black; cursor: pointer; }
+        .matched { background-color: lightgreen !important; }
+        .wrong { background-color: lightcoral; }
+        .highlighted { background-color: yellow !important; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Find the Hidden Similarities</h1>
+    <p>Select the <b>exact two counterparties</b> among other similar data.</p>
+    
+    <div>
+        <label for="gameMode">Choose a mode:</label>
+        <select id="gameMode">
+            <option value="difficulty1">Level 1 (15 items)</option>
+            <option value="difficulty2">Level 2 (30 items)</option>
+            <option value="difficulty3">Level 3 (40 items)</option>
+        </select>
+        <button onclick="startGame()">Start Game</button>
+    </div>
+    
+    <p>Time Spent: <span id="timer">0</span> seconds</p>
+    
+    <div class="container hidden" id="gameArea"></div>
+    <button class="hidden" id="submitBtn" onclick="checkSelection()">Submit Selection</button>
+    <button class="hidden" id="showAnswerBtn" onclick="showAnswer()">Show Answer</button>
+    <p id="result"></p>
+    
+    <script>
+        let dataset = [];
+        let selectedItems = [];
+        let correctPair = [];
+        let timerInterval;
+        let timeElapsed = 0;
+
+        function generateData() {
+            const gameMode = document.getElementById("gameMode").value;
+            let dataSize = gameMode === "difficulty1" ? 15 : gameMode === "difficulty2" ? 30 : 40;
+            let categories = ["BTC", "ETH", "Stock", "Wallet", "Percentage"];
+            let selectedCategory = categories[Math.floor(Math.random() * categories.length)];
+            const amounts = [];
+            for (let i = 0; i < dataSize; i++) {
+                let amount = (Math.random() * 1000 + 100).toFixed(2);
+                amounts.push(amount);
+            }
+            let correctAmount = (Math.random() * 1000 + 100).toFixed(2);
+            let correctIndexes = [];
+            while (correctIndexes.length < 2) {
+                let randIndex = Math.floor(Math.random() * amounts.length);
+                if (!correctIndexes.includes(randIndex)) {
+                    amounts[randIndex] = correctAmount;
+                    correctIndexes.push(randIndex);
+                }
+            }
+            dataset = amounts.map((amt, index) => ({ id: index + 1, value: `${selectedCategory} ${amt}`, category: amt === correctAmount ? 'correct' : 'similar' }));
+            correctPair = dataset.filter(item => item.category === 'correct').map(item => item.id);
+            dataset = shuffleArray(dataset);
+        }
+
+        function shuffleArray(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function startGame() {
+            clearInterval(timerInterval);
+            timeElapsed = 0;
+            document.getElementById("timer").innerText = timeElapsed;
+            timerInterval = setInterval(() => {
+                timeElapsed++;
+                document.getElementById("timer").innerText = timeElapsed;
+            }, 1000);
+
+            document.getElementById("gameArea").classList.remove("hidden");
+            document.getElementById("submitBtn").classList.remove("hidden");
+            document.getElementById("showAnswerBtn").classList.remove("hidden");
+            document.getElementById("gameArea").innerHTML = '';
+            document.getElementById("result").innerText = "";
+            generateData();
+            dataset.forEach(item => {
+                let div = document.createElement("div");
+                div.classList.add("data-item");
+                div.innerText = item.value;
+                div.dataset.id = item.id;
+                div.onclick = function() { toggleSelection(this, item.id); };
+                document.getElementById("gameArea").appendChild(div);
+            });
+            selectedItems = [];
+        }
+
+        function toggleSelection(element, id) {
+            if (selectedItems.includes(id)) {
+                selectedItems = selectedItems.filter(item => item !== id);
+                element.classList.remove("matched");
+            } else if (selectedItems.length < 2) {
+                selectedItems.push(id);
+                element.classList.add("matched");
+            }
+        }
+
+        function checkSelection() {
+            let correct = selectedItems.length === 2 && correctPair.every(id => selectedItems.includes(id));
+            if (correct) {
+                document.getElementById("result").innerText = "✅ Correct! You found the exact counterparties.";
+                clearInterval(timerInterval);
+                setTimeout(startGame, 2000);
+            } else {
+                document.getElementById("result").innerText = "❌ Incorrect! Try again.";
+                selectedItems.forEach(id => {
+                    let itemDiv = [...document.getElementsByClassName("data-item")].find(div => parseInt(div.dataset.id) === id);
+                    itemDiv.classList.add("wrong");
+                });
+                setTimeout(() => {
+                    [...document.getElementsByClassName("wrong")].forEach(div => div.classList.remove("wrong"));
+                }, 1000);
+            }
+            selectedItems = [];
+        }
+
+        function showAnswer() {
+            dataset.forEach(item => {
+                let itemDiv = [...document.getElementsByClassName("data-item")].find(div => parseInt(div.dataset.id) === item.id);
+                if (correctPair.includes(item.id)) {
+                    if (!itemDiv.classList.contains("matched")) {
+                        itemDiv.classList.add("highlighted");
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
